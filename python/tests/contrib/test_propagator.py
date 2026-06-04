@@ -90,10 +90,27 @@ def test_propagator_time_dependent():
     raise NotImplementedError
 
 
-@pytest.mark.skip(reason="TODO: open-system dynamical map (stretch goal)")
+@pytest.mark.skip(reason="TODO(api): operator adjoint + qutip oracle")
 def test_propagator_open_system_dynamical_map():
-    """Open-system propagator (d^2 x d^2 map) vs qutip.propagator(H, t, c_ops).
+    """Open-system dynamical map Phi(t) vs an independent master-equation solve.
 
-    TODO: implement once propagator() supports collapse_operators.
+    The open-system path is implemented (propagator with collapse_operators
+    returns a d^2 x d^2 map), but two things must land first:
+      1. TODO(api): the operator-adjoint helper (_dagger) needs a confirmed
+         CUDA-Q adjoint API.
+      2. Validate by *action*, not by raw matrix, to avoid any vec-convention
+         mismatch: pick a test rho0, form rho_t = unvec(Phi @ vec(rho0)) and
+         compare to qutip.mesolve(H, rho0, [0, t], c_ops).rho_final. Comparing
+         Phi to qutip.propagator(...) directly would require matching column-
+         vs row-stacking conventions.
+
+    Example skeleton (amplitude damping on a qubit):
+        gamma = 0.1
+        H = 0.5 * (2*np.pi*0.1) * cudaq.spin.z(0)
+        c = np.sqrt(gamma) * <annihilate(0)>           # collapse operator
+        Phi = cudaq.contrib.propagator(H, {0: 2}, schedule,
+                                       collapse_operators=[c])
+        rho_t = (Phi @ rho0.reshape(-1)).reshape(2, 2)  # row-major unvec
+        # compare rho_t to a qutip.mesolve reference
     """
     raise NotImplementedError
